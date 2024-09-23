@@ -7,10 +7,10 @@
 
 #include <fmt/core.h>
 #include <gtest/gtest.h>
-class PlaceholderTest {};
 
 namespace lz {
 namespace test {
+class PlaceholderTest : public testing::Test {};
 TEST_F(PlaceholderTest, PlaceholderTest1) {
   EXPECT_EQ(1, 1);
 }

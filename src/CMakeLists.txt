@@ -1,10 +1,11 @@
-file(GLOB_RECURSE SRC_FILES src/*.cpp)
+file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-set(SOURCES ${SRC_FILES})
+set(SOURCE ${SRC_FILES})
 
-add_executable(ZhouBoTong ${SOURCES})
+find_package(fmt  REQUIRED)
+add_executable(ZhouBoTong ${SOURCE})
 
 target_include_directories(ZhouBoTong PUBLIC include)
-target_link_libraries(ZhouBoTong PUBLIC pthread)
+target_link_libraries(ZhouBoTong PUBLIC   fmt::fmt pthread)
 
-set_directory_properties(ZhouBoTong PROERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set_target_properties(ZhouBoTong PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
