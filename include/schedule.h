@@ -17,9 +17,14 @@ class Schedule {
  public:
   Schedule();
   ~Schedule() noexcept = default;
-  HandleID add_task(HandleInfo handle);
+
   void loop();
+  void Start();
   void remove_task(HandleID id);
+
+  HandleID schedule_now(HandleInfo handle);
+  HandleID schedule_at(HandleInfo handle, TimePoint time_point);
+  HandleID schedule_after(HandleInfo handle, Duration duration);
 
  private:
   Schedule(const Schedule&) = delete;
@@ -31,7 +36,7 @@ class Schedule {
   std::jthread _jthread;
   NetEvent _net_event{};
   std::queue<HandleInfo> _ready_queue{};
-  std::queue<HandleInfo> _wait_queue{};
+  std::queue<std::pair<HandleInfo, TimePoint>> _wait_queue{};
   std::queue<HandleID> _cancel_queue{};
 };
 

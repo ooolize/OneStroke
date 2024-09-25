@@ -10,16 +10,30 @@ namespace lz {
 namespace ZhouBoTong {
 
 Schedule::Schedule() {
-  _jthread = std::jthread([this]() { loop(); });
 }
 
-HandleID Schedule::add_task(HandleInfo handle) {
+HandleID Schedule::schedule_now(HandleInfo handle) {
   _ready_queue.push(handle);
   return handle.id;
 }
 
+HandleID Schedule::schedule_at(HandleInfo handle, TimePoint time_point) {
+  handle.state = HandleState::kWait;
+  _wait_queue.push(std::pair(handle, time_point));
+  return handle.id;
+}
+
+HandleID Schedule::schedule_after(HandleInfo handle, Duration duration) {
+  TimePoint time_point = std::chrono::steady_clock::now() + duration;
+  return schedule_at(handle, time_point);
+}
+
 void Schedule::remove_task(HandleID id) {
   _cancel_queue.push(id);
+}
+
+void Schedule::Start() {
+  _jthread = std::jthread(&Schedule::loop, this);
 }
 
 void Schedule::loop() {
@@ -30,9 +44,10 @@ void Schedule::loop() {
     // 如果wait有就绪的任务，就将其放入ready队列
     while (!_wait_queue.empty()) {
       auto handle = _wait_queue.front();
-      if (handle.state == HandleState::kWait) {
-        handle.state = HandleState::kReady;
-        _ready_queue.push(handle);
+      if (handle.first.state == HandleState::kWait &&
+          std::chrono::steady_clock::now() >= handle.second) {
+        handle.first.state = HandleState::kReady;
+        _ready_queue.push(handle.first);
         _wait_queue.pop();
       }
     }

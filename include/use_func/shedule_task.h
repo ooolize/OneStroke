@@ -11,18 +11,27 @@
 
 namespace lz {
 namespace ZhouBoTong {
-Task detail_shedule_task(Task task) {
-  co_await task;
+
+class SheduleTaskAwaiter {
+ public:
+  using promise_type = Task::promise_type;
+  SheduleTaskAwaiter(Task&& task) : _task(std::move(task)) {
+  }
+  Task& operator co_await() {
+    return _task;
+  }
+
+ private:
+  Task _task;
+};
+
+SheduleTaskAwaiter shedule_task(Task&& task) {
+  return SheduleTaskAwaiter{std::move(task)};
 }
 
-int shedule_task(Task task) {
-  Task new_task = detail_shedule_task(task);
-  return new_task.get_return_value();
-}
-
-Task create_task() {
-  co_return 42;
-}
+// Task create_task() {
+//   co_return 42;
+// }
 
 }  // namespace ZhouBoTong
 }  // namespace lz
