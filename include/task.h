@@ -7,16 +7,64 @@
 #pragma once
 
 #include <coroutine>
+#include <utility>
 
 #include "interface/handle.h"
 #include "schedule.h"
 namespace lz {
 namespace ZhouBoTong {
 
+template <typename R>
+class Result {
+ public:
+  void return_value(R value) {
+    _result = value;
+  }
+  void unhandled_exception() {
+    _result = std::current_exception();
+  }
+  R get_return_value() {
+    if (std::holds_alternative<std::exception_ptr>(_result)) {
+      std::rethrow_exception(std::get<std::exception_ptr>(_result));
+    }
+    return std::get<R>(_result);
+  }
+
+ private:
+  std::variant<R, std::exception_ptr> _result{};
+};
+
+template <>
+class Result<void> {
+ public:
+  void return_void() {
+  }
+  void unhandled_exception() {
+    _result = std::current_exception();
+  }
+
+  decltype(auto) get_return_value() {
+    if (_result) {
+      std::rethrow_exception(*_result);
+    }
+    return std::nullopt;
+  }
+
+ private:
+  std::optional<std::exception_ptr> _result{};
+};
+
+template <typename R>
 class Task {
  public:
-  class Promise {
+  class Promise : public Result<R> {
    public:
+    template <typename... Args>
+    Promise(Args... args) {
+    }
+    auto get_return_object() {
+      return Task<R>{std::coroutine_handle<Promise>::from_promise(*this)};
+    }
     // Promise() = default;
     // 协程首次挂起前不会挂起，继续执行
     std::suspend_never initial_suspend() {
@@ -28,25 +76,12 @@ class Task {
       return {};
     }
 
-    Task get_return_object() {
-      return Task{std::coroutine_handle<Promise>::from_promise(*this)};
-    }
-    void unhandled_exception() {
-    }
-    int return_value(int val) {
-      _value = val;
-      return val;
-    };
-    auto yield_value(int val) {
-      _value = val;
-      return std::suspend_always{};
-    };
-    // void return_void() {
-    // }
-    int get_return_value() {
-      return _value;
-    }
-    int _value{};
+    // auto yield_value(int val) {
+    //   _value = val;
+    //   return std::suspend_always{};
+    // };
+
+    // int _value{};
   };
 
   using promise_type = Promise;
@@ -54,7 +89,7 @@ class Task {
     : _coroutine_handle(coroutine_handle) {
   }
   ~Task() {
-    if (_coroutine_handle) {
+    if (_coroutine_handle && _coroutine_handle.done()) {
       _coroutine_handle.destroy();
     }
   }
@@ -69,13 +104,9 @@ class Task {
     GetSchedule::get_instance().schedule_now(handle_info);
   }
   // shedule调用完成后 会调用这个函数
-  int await_resume() {
-    return _coroutine_handle.promise().get_return_value();
-  }
+  void await_resume() {
+    }
 
-  auto get_handle() {
-    return _coroutine_handle;
-  }
   void resume() {
     if (_coroutine_handle.done()) {
       return;

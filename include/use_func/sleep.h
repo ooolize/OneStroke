@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <fmt/core.h>
+
 #include <chrono>
 #include <coroutine>
 
@@ -31,7 +33,7 @@ class SleepAwaiter {
     GetSchedule::get_instance().schedule_after(handle_info, _seconds);
   }
   void await_resume() {
-    fmt::print("await_resume\n");
+    std::cout << "resume\n";
   }
 
  private:
@@ -39,8 +41,8 @@ class SleepAwaiter {
   //   std::coroutine_handle<> _caller_handle;
 };
 
-SleepAwaiter co_sleep(std::chrono::seconds seconds) {
-  return SleepAwaiter{seconds};
+Task<void> co_sleep(std::chrono::seconds seconds) {
+  co_await SleepAwaiter{seconds};
 }
 
 }  // namespace ZhouBoTong

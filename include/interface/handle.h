@@ -48,7 +48,7 @@ class CoRoutineHandler : public Handle {
   }
 
  private:
-  std::coroutine_handle<> _coroutine_handle;
+  std::coroutine_handle<> _coroutine_handle{};
 };
 struct HandleInfo {
   HandleID id{};

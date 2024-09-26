@@ -11,7 +11,7 @@
 
 #include "use_func/shedule_task.h"
 #include "use_func/sleep.h"
-using namespace lz::ZhouBoTong;
+using namespace lz::ZhouBoTong;  // NOLINT
 
 // Task func1() {
 //   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -24,10 +24,9 @@ using namespace lz::ZhouBoTong;
 //   fmt::print("ret = {}\n", ret);
 // }
 
-Task test_sleep() {
+Task<void> test_sleep() {
   co_await co_sleep(std::chrono::seconds(2));
   std::cout << "Inside coroutine\n";
-  co_return 42;
 }
 
 int main() {
