@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include <mutex>
 #include <queue>
 #include <thread>
 
@@ -33,6 +34,7 @@ class Schedule {
   Schedule& operator=(Schedule&&) = delete;
 
  private:
+  std::mutex _mutex{};
   std::jthread _jthread;
   NetEvent _net_event{};
   std::queue<HandleInfo> _ready_queue{};

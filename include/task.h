@@ -19,7 +19,7 @@ class Task {
    public:
     // Promise() = default;
     // 协程首次挂起前不会挂起，继续执行
-    std::suspend_always initial_suspend() {
+    std::suspend_never initial_suspend() {
       return {};
     }
 
@@ -58,20 +58,20 @@ class Task {
       _coroutine_handle.destroy();
     }
   }
-  // bool await_ready() {
-  //   return false;
-  // }
-  // void await_suspend(std::coroutine_handle<promise_type> coroutine_handle) {
-  //   HandleInfo handle_info{
-  //     .id = 0,
-  //     .handle = new CoRoutineHandler(coroutine_handle),
-  //   };
-  //   GetSchedule::get_instance().schedule_now(handle_info);
-  // }
-  // // shedule调用完成后 会调用这个函数
-  // int await_resume() {
-  //   return _coroutine_handle.promise().get_return_value();
-  // }
+  bool await_ready() {
+    return false;
+  }
+  void await_suspend(std::coroutine_handle<promise_type> coroutine_handle) {
+    HandleInfo handle_info{
+      .id = 0,
+      .handle = new CoRoutineHandler(coroutine_handle),
+    };
+    GetSchedule::get_instance().schedule_now(handle_info);
+  }
+  // shedule调用完成后 会调用这个函数
+  int await_resume() {
+    return _coroutine_handle.promise().get_return_value();
+  }
 
   auto get_handle() {
     return _coroutine_handle;

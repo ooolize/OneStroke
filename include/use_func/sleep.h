@@ -24,11 +24,11 @@ class SleepAwaiter {
   }
   void await_suspend(std::coroutine_handle<> handle) {
     // _caller_handle = handle;
-    // HandleInfo handle_info{
-    //   .id = getNextId(),
-    //   .handle = new CoRoutineHandler(handle),
-    // };
-    // GetSchedule::get_instance().schedule_after(handle_info, _seconds);
+    HandleInfo handle_info{
+      .id = getNextId(),
+      .handle = new CoRoutineHandler(handle),
+    };
+    GetSchedule::get_instance().schedule_after(handle_info, _seconds);
   }
   void await_resume() {
     fmt::print("await_resume\n");

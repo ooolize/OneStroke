@@ -13,15 +13,19 @@ Schedule::Schedule() {
 }
 
 HandleID Schedule::schedule_now(HandleInfo handle) {
+  std::lock_guard<std::mutex> lock(_mutex);
+
   _ready_queue.push(handle);
   return handle.id;
 }
 
 HandleID Schedule::schedule_at(HandleInfo handle, TimePoint time_point) {
+  std::lock_guard<std::mutex> lock(_mutex);
+
   handle.state = HandleState::kWait;
   _wait_queue.push(std::pair(handle, time_point));
   return handle.id;
-}
+} 
 
 HandleID Schedule::schedule_after(HandleInfo handle, Duration duration) {
   TimePoint time_point = std::chrono::steady_clock::now() + duration;
@@ -29,6 +33,8 @@ HandleID Schedule::schedule_after(HandleInfo handle, Duration duration) {
 }
 
 void Schedule::remove_task(HandleID id) {
+  std::lock_guard<std::mutex> lock(_mutex);
+
   _cancel_queue.push(id);
 }
 
@@ -39,6 +45,7 @@ void Schedule::Start() {
 void Schedule::loop() {
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::lock_guard<std::mutex> lock(_mutex);
 
     // 如果epoll有就绪的任务，就将其放入ready队列
     // 如果wait有就绪的任务，就将其放入ready队列

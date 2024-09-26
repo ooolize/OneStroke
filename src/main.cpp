@@ -25,29 +25,23 @@ using namespace lz::ZhouBoTong;
 // }
 
 Task test_sleep() {
-  // co_await co_sleep(std::chrono::seconds(2));
-  co_yield 42;
+  co_await co_sleep(std::chrono::seconds(2));
   std::cout << "Inside coroutine\n";
-  co_yield 43;
-  co_yield 44;
+  co_return 42;
 }
 
 int main() {
-  // GetSchedule::get_instance().Start();
-  // std::this_thread::sleep_for(std::chrono::seconds(1));
-  // func1();
-  Task p = test_sleep();
-  auto promise = p._coroutine_handle.promise();
-  std::cout << "before resume\n";
-  // std::this_thread::sleep_for(std::chrono::seconds(1));
-  std::cout << "ret = " << promise.get_return_value() << std::endl;
+  GetSchedule::get_instance().Start();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  p.resume();
-  std::cout << "ret = " << promise.get_return_value() << std::endl;
+  // 这是错误的 为什么
+  // test_sleep();
 
-  p.resume();
-  std::cout << "ret = " << promise.get_return_value() << std::endl;
-  // p._coroutine_handle.destroy();
-  // std::this_thread::sleep_for(std::chrono::seconds(10));
+  // 这才是正确的
+  auto task1 = test_sleep();
+
+  fmt::print("do some thing\n");
+
+  std::this_thread::sleep_for(std::chrono::seconds(10));
   return 0;
 }

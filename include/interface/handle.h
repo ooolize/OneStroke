@@ -39,9 +39,10 @@ class CoRoutineHandler : public Handle {
   CoRoutineHandler(std::coroutine_handle<> coroutine_handle)
     : _coroutine_handle(coroutine_handle) {
   }
-  void run() {
+  void run() final {
     if (_coroutine_handle.done()) {
       fmt::print("coroutine done\n");
+      // return;
     }
     _coroutine_handle.resume();
   }
@@ -50,9 +51,9 @@ class CoRoutineHandler : public Handle {
   std::coroutine_handle<> _coroutine_handle;
 };
 struct HandleInfo {
-  HandleID id;
-  Handle* handle;
-  HandleState state;
+  HandleID id{};
+  Handle* handle = nullptr;
+  HandleState state = HandleState::kReady;
 };
 
 inline HandleID getNextId() {
