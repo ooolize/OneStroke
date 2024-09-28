@@ -42,7 +42,7 @@ class CoRoutineHandler : public Handle {
   void run() final {
     if (_coroutine_handle.done()) {
       fmt::print("coroutine done\n");
-      // return;
+      return;
     }
     _coroutine_handle.resume();
   }

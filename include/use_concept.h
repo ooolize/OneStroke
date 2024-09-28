@@ -21,7 +21,8 @@ concept Awaiter = requires(T t) {
 template <typename T>
 concept Future = requires(T t) {
   typename T::promise_type;
-  { t._h.promise() } -> std::same_as<typename T::promise_type>;
+  // { t._coroutine_handle.promise() } -> std::same_as<typename
+  // T::promise_type>;
 };
 
 template <typename T>

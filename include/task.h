@@ -64,14 +64,13 @@ class Task {
 
     // 自由函数
     template <typename... Args>
-    Promise(NoWaitForInit no_wait_for_init, Args... args)
-      : is_suspend_init(false) {
+    Promise(WaitForInit wait_for_init, Args... args) : is_suspend_init(true) {
     }
 
     // 成员函数 lambda
     template <typename Obj, typename... Args>
-    Promise(Obj&& obj, NoWaitForInit no_wait_for_init, Args... args)
-      : is_suspend_init(false) {
+    Promise(Obj&& obj, WaitForInit wait_for_init, Args... args)
+      : is_suspend_init(true) {
     }
     auto get_return_object() {
       return Task<R>{std::coroutine_handle<Promise>::from_promise(*this)};
@@ -102,10 +101,10 @@ class Task {
     //   _value = val;
     //   return std::suspend_always{};
     // };
-    bool is_suspend_init{true};
+    bool is_suspend_init{false};
     // int _value{};
   };
-
+  using result_type = R;
   using promise_type = Promise;
   explicit Task(std::coroutine_handle<promise_type> coroutine_handle)
     : _coroutine_handle(coroutine_handle) {
@@ -120,13 +119,14 @@ class Task {
   }
   void await_suspend(std::coroutine_handle<promise_type> coroutine_handle) {
     HandleInfo handle_info{
-      .id = 0,
+      .id = getNextId(),
       .handle = new CoRoutineHandler(coroutine_handle),
     };
     GetSchedule::get_instance().schedule_now(handle_info);
   }
-  // shedule调用完成后 会调用这个函数
+  // shedule遍历队列 调用handle的resume 协程恢复 然后到这里
   void await_resume() {
+    std::cout << "await_resume\n";
   }
 
   void resume() {
@@ -137,6 +137,9 @@ class Task {
   }
   auto get_return_value() {
     return _coroutine_handle.promise().get_return_value();
+  }
+  decltype(auto) get_handle() {
+    return _coroutine_handle;
   }
   //  private:
   std::coroutine_handle<promise_type> _coroutine_handle{};

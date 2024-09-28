@@ -8,7 +8,7 @@
 #pragma once
 namespace lz {
 namespace ZhouBoTong {
-class NoWaitForInit {};
-constexpr NoWaitForInit no_wait_for_init{};
+class WaitForInit {};
+constexpr WaitForInit wait_for_init{};
 }  // namespace ZhouBoTong
 }  // namespace lz

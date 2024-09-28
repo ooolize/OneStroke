@@ -34,7 +34,7 @@ class SleepAwaiter {
     GetSchedule::get_instance().schedule_after(handle_info, _seconds);
   }
   void await_resume() {
-    std::cout << "resume\n";
+    std::cout << "sleep_resume\n";
   }
 
  private:
@@ -42,13 +42,13 @@ class SleepAwaiter {
   //   std::coroutine_handle<> _caller_handle;
 };
 
-Task<void> detail_co_sleep(NoWaitForInit nowait, std::chrono::seconds seconds) {
+Task<void> detail_co_sleep(std::chrono::seconds seconds) {
   co_await SleepAwaiter{seconds};
 }
 
 // 不是协程
 auto co_sleep(std::chrono::seconds seconds) {
-  return detail_co_sleep(no_wait_for_init, seconds);
+  return detail_co_sleep(seconds);
 }
 
 }  // namespace ZhouBoTong
