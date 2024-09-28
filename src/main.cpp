@@ -39,7 +39,8 @@ int main() {
   // 这才是正确的
   auto task1 = test_sleep();
 
-  fmt::print("do some thing\n");
+  fmt::print("{}\n", "do some thing");
+  task1.resume();
 
   std::this_thread::sleep_for(std::chrono::seconds(10));
   return 0;

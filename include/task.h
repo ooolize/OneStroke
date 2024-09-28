@@ -11,6 +11,7 @@
 
 #include "interface/handle.h"
 #include "schedule.h"
+#include "tag.h"
 namespace lz {
 namespace ZhouBoTong {
 
@@ -59,16 +60,37 @@ class Task {
  public:
   class Promise : public Result<R> {
    public:
+    Promise() = default;
+
+    // 自由函数
     template <typename... Args>
-    Promise(Args... args) {
+    Promise(NoWaitForInit no_wait_for_init, Args... args)
+      : is_suspend_init(false) {
+    }
+
+    // 成员函数 lambda
+    template <typename Obj, typename... Args>
+    Promise(Obj&& obj, NoWaitForInit no_wait_for_init, Args... args)
+      : is_suspend_init(false) {
     }
     auto get_return_object() {
       return Task<R>{std::coroutine_handle<Promise>::from_promise(*this)};
     }
     // Promise() = default;
     // 协程首次挂起前不会挂起，继续执行
-    std::suspend_never initial_suspend() {
-      return {};
+    auto initial_suspend() {
+      class InitAwaiter {
+       public:
+        bool await_ready() {
+          return !is_suspend_init;
+        }
+        void await_suspend(std::coroutine_handle<Promise> coroutine_handle) {
+        }
+        void await_resume() {
+        }
+        bool is_suspend_init{true};
+      };
+      return InitAwaiter{is_suspend_init};
     }
 
     // 协程完成时挂起 final_suspend，保持协程状态
@@ -80,12 +102,12 @@ class Task {
     //   _value = val;
     //   return std::suspend_always{};
     // };
-
+    bool is_suspend_init{true};
     // int _value{};
   };
 
   using promise_type = Promise;
-  Task(std::coroutine_handle<promise_type> coroutine_handle)
+  explicit Task(std::coroutine_handle<promise_type> coroutine_handle)
     : _coroutine_handle(coroutine_handle) {
   }
   ~Task() {
@@ -105,7 +127,7 @@ class Task {
   }
   // shedule调用完成后 会调用这个函数
   void await_resume() {
-    }
+  }
 
   void resume() {
     if (_coroutine_handle.done()) {
@@ -117,7 +139,7 @@ class Task {
     return _coroutine_handle.promise().get_return_value();
   }
   //  private:
-  std::coroutine_handle<promise_type> _coroutine_handle;
+  std::coroutine_handle<promise_type> _coroutine_handle{};
 };
 }  // namespace ZhouBoTong
 }  // namespace lz
