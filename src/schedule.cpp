@@ -25,7 +25,7 @@ HandleID Schedule::schedule_at(HandleInfo handle, TimePoint time_point) {
   handle.state = HandleState::kWait;
   _wait_queue.push(std::pair(handle, time_point));
   return handle.id;
-} 
+}
 
 HandleID Schedule::schedule_after(HandleInfo handle, Duration duration) {
   TimePoint time_point = std::chrono::steady_clock::now() + duration;
@@ -38,6 +38,11 @@ void Schedule::remove_task(HandleID id) {
   _cancel_queue.push(id);
 }
 
+bool Schedule::is_empty() {
+  std::lock_guard<std::mutex> lock(_mutex);
+  return _ready_queue.empty() && _wait_queue.empty();
+}
+
 void Schedule::Start() {
   _jthread = std::jthread(&Schedule::loop, this);
 }
@@ -45,11 +50,11 @@ void Schedule::Start() {
 void Schedule::loop() {
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    std::lock_guard<std::mutex> lock(_mutex);
 
     // 如果epoll有就绪的任务，就将其放入ready队列
     // 如果wait有就绪的任务，就将其放入ready队列
     while (!_wait_queue.empty()) {
+      std::lock_guard<std::mutex> lock(_mutex);
       auto handle = _wait_queue.front();
       if (handle.first.state == HandleState::kWait &&
           std::chrono::steady_clock::now() >= handle.second) {
@@ -62,10 +67,14 @@ void Schedule::loop() {
     while (!_ready_queue.empty()) {
       auto handle = _ready_queue.front();
       if (handle.state == HandleState::kCancel) {
+        std::lock_guard<std::mutex> lock(_mutex);
         _ready_queue.pop();
       } else {
         handle.handle->run();
-        _ready_queue.pop();
+        {
+          std::lock_guard<std::mutex> lock(_mutex);
+          _ready_queue.pop();
+        }
       }
     }
   }

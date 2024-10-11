@@ -22,6 +22,7 @@ class Schedule {
   void loop();
   void Start();
   void remove_task(HandleID id);
+  bool is_empty();
 
   HandleID schedule_now(HandleInfo handle);
   HandleID schedule_at(HandleInfo handle, TimePoint time_point);

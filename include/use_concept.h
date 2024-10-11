@@ -12,9 +12,12 @@ namespace lz {
 namespace concepts {
 
 template <typename T>
-concept Awaiter = requires(T t) {
+concept Awaitable = requires(T t) { t.operator co_await(); };
+
+template <typename T>
+concept Awaiter = Awaitable<T> || requires(T t) {
   { t.await_ready() } -> std::convertible_to<bool>;
-  t.await_suspend();
+  // TODO t.await_suspend(coroutine_handle);
   t.await_resume();
 };
 

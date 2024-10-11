@@ -7,11 +7,13 @@
 #pragma once
 
 #include <coroutine>
+#include <source_location>
 #include <utility>
 
 #include "interface/handle.h"
 #include "schedule.h"
 #include "tag.h"
+#include "use_concept.h"
 namespace lz {
 namespace ZhouBoTong {
 
@@ -77,7 +79,7 @@ class Task {
     }
     // Promise() = default;
     // 协程首次挂起前不会挂起，继续执行
-    auto initial_suspend() {
+    decltype(auto) initial_suspend() {
       class InitAwaiter {
        public:
         bool await_ready() {
@@ -92,9 +94,53 @@ class Task {
       return InitAwaiter{is_suspend_init};
     }
 
-    // 协程完成时挂起 final_suspend，保持协程状态
-    std::suspend_always final_suspend() noexcept {
-      return {};
+    // 协程完成时挂起 final_suspend，保持协程状态 由task的析构函数销毁协程
+    decltype(auto) final_suspend() noexcept {
+      class FinalAwaiter {
+       public:
+        bool await_ready() noexcept {
+          return false;
+        }
+        // 此时coroutine_handle是子协程
+        void await_suspend(
+          std::coroutine_handle<Promise> coroutine_handle) noexcept {
+          auto parent = coroutine_handle.promise()._parent;
+          if (!parent) {
+            return;
+          }
+          // 恢复父协程 协程的销毁交给co_await taskA()所触发的task析构函数
+          HandleInfo handle_info{
+            .id = getNextId(),
+            .handle = new CoRoutineHandler(parent),
+          };
+          GetSchedule::get_instance().schedule_now(handle_info);
+        }
+        void await_resume() noexcept {
+        }
+      };
+      return FinalAwaiter{};
+    }
+
+    // 打印调用栈
+    void frame_stack() {
+      fmt::print("{}:{}-{}\n",
+                 _source_location.file_name(),
+                 _source_location.line(),
+                 _source_location.function_name());
+      if (_parent) {
+        _parent.promise().frame_stack();
+      } else {
+        fmt::print("\n");
+      }
+    }
+
+    // 每次记录co_await的位置 是这里而不是构造函数 构造函数是协程创建时
+    template <lz::concepts::Awaiter T>
+    decltype(auto) await_transform(
+      T&& awaiter,
+      std::source_location source_location = std::source_location::current()) {
+      _source_location = source_location;
+      return std::forward<T>(awaiter);
     }
 
     // auto yield_value(int val) {
@@ -102,6 +148,8 @@ class Task {
     //   return std::suspend_always{};
     // };
     bool is_suspend_init{false};
+    std::source_location _source_location{};
+    std::coroutine_handle<Promise> _parent{};
     // int _value{};
   };
   using result_type = R;
@@ -120,8 +168,12 @@ class Task {
   void await_suspend(std::coroutine_handle<promise_type> coroutine_handle) {
     HandleInfo handle_info{
       .id = getNextId(),
-      .handle = new CoRoutineHandler(coroutine_handle),
+      .handle = new CoRoutineHandler(_coroutine_handle),
     };
+    // 保存当前协程挂起时 保存父协程
+    _coroutine_handle.promise()._parent = coroutine_handle;
+
+    // 如果没就绪 何时恢复子协程--->进入队列
     GetSchedule::get_instance().schedule_now(handle_info);
   }
   // shedule遍历队列 调用handle的resume 协程恢复 然后到这里

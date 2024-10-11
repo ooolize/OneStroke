@@ -100,10 +100,69 @@ int main() {
   return 0;
 }
 ```
+问题6： 子协程退出会自动返回到父协程吗 那为什么还需要子协程保存父协程的句柄并恢复
+
+子协程退出是会自动返回给父协程，那是final_suspend是suspend_never的情况下。 如果是suspend_always,就需要在task中RAII的回收句柄，这也意味着需要手动恢复父协程，所以才有了fianlawaiter
+
+
+
+问题7: run中 为什么sleep_resume在后面
+```c++
+before test3
+before sleep
+await_resume
+Inside coroutine
+coroutine done
+sleep_resume
+after test3
+```
+
+问题8: 为什么会死锁
+
+在恢复(run)deep1后（注意run动作现在是持有锁的） 
+此时又co_await deep2(await_suspend里要把任务放入队列，此时又获取一遍锁)
+最终的效果是获取的两次锁 所以死锁了
+
+解决方法 改变锁的粒度
+
+问题9: 当调用co_await时候 是先创建并执行deep2 还是进入deep2的await_ready
+
+这也是符合直觉的不是吗 先deep3()生成Task对象 再调用co_await运算符
+
+
+```c++
+==597729== Thread #2: Exiting thread still holds 1 lock
+==597729==    at 0x4C99F60: futex_wait (futex-internal.h:146)
+==597729==    by 0x4C99F60: __lll_lock_wait (lowlevellock.c:49)
+==597729==    by 0x4CA10F0: lll_mutex_lock_optimized (pthread_mutex_lock.c:48)
+==597729==    by 0x4CA10F0: pthread_mutex_lock@@GLIBC_2.2.5 (pthread_mutex_lock.c:93)
+==597729==    by 0x4851274: ??? (in /usr/libexec/valgrind/vgpreload_helgrind-amd64-linux.so)
+==597729==    by 0x118A52: __gthread_mutex_lock(pthread_mutex_t*) (gthr-default.h:749)
+==597729==    by 0x11A4F4: std::mutex::lock() (std_mutex.h:113)
+==597729==    by 0x118BC2: std::lock_guard<std::mutex>::lock_guard(std::mutex&) (std_mutex.h:249)
+==597729==    by 0x1184B4: lz::ZhouBoTong::Schedule::schedule_now(lz::ZhouBoTong::HandleInfo) (src/schedule.cpp:16)
+==597729==    by 0x11488E: lz::ZhouBoTong::Task<void>::await_suspend(std::__n4861::coroutine_handle<lz::ZhouBoTong::Task<void>::Promise>) (include/task.h:146)
+==597729==    by 0x112950: deep1(lz::ZhouBoTong::WaitForInit) [clone .resume] (src/main.cpp:61)
+==597729==    by 0x1155C7: std::__n4861::coroutine_handle<void>::resume() const (coroutine:135)
+==597729==    by 0x11545B: lz::ZhouBoTong::CoRoutineHandler::run() (include/interface/handle.h:47)
+==597729==    by 0x1189D8: lz::ZhouBoTong::Schedule::loop() (src/schedule.cpp:72)
+```
+由于选择了RAII 所以增加手动在final_suspend恢复父协程
+在
+
+co_await让出父协程 并在子协程(awaiter)的await_suspend中有机会恢复 或者保存下来择机恢复
 
 ## TODO
 
 + loop改造
++ final恢复调用者 以及 构造时保存调用者
++ run
++ wait_for
++ frame_stack
++ read
+
+
+
+
 + promise类型的构造 标签派发 使得init_suspend不再阻塞
 + task_schedule的参数传递 
-+ final恢复调用者 以及 构造时保存调用者
