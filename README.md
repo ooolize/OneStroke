@@ -159,19 +159,25 @@ co_await是否让出父协程取决于awaiter的实现
 // final_suspend
 恢复父协程两次 一次cancel
 
+## DONE
+
++ final恢复调用者 以及 构造时保存调用者
++ frame_stack
++ run
++ wait_for
++ promise类型的构造 标签派发 使得init_suspend不再阻塞
++ task_schedule的参数传递 
+
+
 ## TODO
 
 + loop改造
-+ final恢复调用者 以及 构造时保存调用者
-+ run
-+ wait_for
-+ frame_stack
++ waitqueue数据优化
 + read
 
 
 
 
-+ promise类型的构造 标签派发 使得init_suspend不再阻塞
-+ task_schedule的参数传递 
+
 
 想好数据怎么存放 再确定关系
