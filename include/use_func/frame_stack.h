@@ -35,9 +35,27 @@ class FrameStackAwaiter {
 };
 
 // 打印协程调用栈
-
+// [[nodiscord("should be used in co_await")]]
 FrameStackAwaiter frame_stack() {
   return FrameStackAwaiter{};
+}
+
+Task<void> deep3(WaitForInit) {
+  fmt::print("{}\n", "before deep3");
+  co_await frame_stack();
+  fmt::print("{}\n", "after deep3");
+}
+
+Task<void> deep2(WaitForInit) {
+  fmt::print("{}\n", "before deep2");
+  co_await deep3(wait_for_init);  // task对象的生存周期就一行吗
+  fmt::print("{}\n", "after deep2");
+}
+
+Task<void> deep1(WaitForInit) {
+  fmt::print("{}\n", "before deep1");
+  co_await deep2(wait_for_init);
+  fmt::print("{}\n", "after deep1");
 }
 
 }  // namespace ZhouBoTong

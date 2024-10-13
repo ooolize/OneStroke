@@ -13,6 +13,7 @@
 #include "use_func/run.h"
 #include "use_func/shedule_task.h"
 #include "use_func/sleep.h"
+#include "use_func/wait_for.h"
 using namespace lz::ZhouBoTong;  // NOLINT
 
 Task<void> test_shedule_task() {
@@ -42,27 +43,17 @@ void test3() {
   fmt::print("{}\n", "after test3");
 }
 
-Task<void> deep3(WaitForInit) {
-  fmt::print("{}\n", "before deep3");
-  co_await frame_stack();
-  fmt::print("{}\n", "after deep3");
-}
-
-Task<void> deep2(WaitForInit) {
-  fmt::print("{}\n", "before deep2");
-  co_await deep3(wait_for_init);  // task对象的生存周期就一行吗
-  fmt::print("{}\n", "after deep2");
-}
-
-Task<void> deep1(WaitForInit) {
-  fmt::print("{}\n", "before deep1");
-  co_await deep2(wait_for_init);
-  fmt::print("{}\n", "after deep1");
-}
 Task<void> test_frame_stack() {
   fmt::print("{}\n", "before test4");
   co_await deep1(wait_for_init);
   fmt::print("{}\n", "after test4");
+}
+
+Task<void> test_wait_for() {
+  fmt::print("{}\n", "before test_wait_for");
+  co_await co_wait_for(wait_func(wait_for_init), std::chrono::seconds(1));
+  fmt::print("{}\n", "after test_wait_for");
+  
 }
 
 int main() {
@@ -71,7 +62,8 @@ int main() {
   // test1();
   // test2();
   // test3();
-  auto p = test_frame_stack();
+  // auto p = test_frame_stack();
+  auto p = test_wait_for();
   std::this_thread::sleep_for(std::chrono::seconds(10000));
   return 0;
 }

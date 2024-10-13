@@ -20,6 +20,7 @@ namespace ZhouBoTong {
 template <typename R>
 class Result {
  public:
+  Result() = default;
   void return_value(R value) {
     _result = value;
   }
@@ -40,6 +41,7 @@ class Result {
 template <>
 class Result<void> {
  public:
+  Result() = default;
   void return_void() {
   }
   void unhandled_exception() {
@@ -60,19 +62,22 @@ class Result<void> {
 template <typename R>
 class Task {
  public:
-  class Promise : public Result<R> {
+  Task() = default;
+
+  class Promise : public CoRoutineHandler, public Result<R> {
    public:
     Promise() = default;
 
     // 自由函数
     template <typename... Args>
-    Promise(WaitForInit wait_for_init, Args... args) : is_suspend_init(true) {
+    Promise(WaitForInit wait_for_init, Args... args)
+      : CoRoutineHandler(), is_suspend_init(true) {
     }
 
     // 成员函数 lambda
     template <typename Obj, typename... Args>
     Promise(Obj&& obj, WaitForInit wait_for_init, Args... args)
-      : is_suspend_init(true) {
+      : CoRoutineHandler(), is_suspend_init(true) {
     }
     auto get_return_object() {
       return Task<R>{std::coroutine_handle<Promise>::from_promise(*this)};
@@ -109,11 +114,9 @@ class Task {
             return;
           }
           // 恢复父协程 协程的销毁交给co_await taskA()所触发的task析构函数
-          HandleInfo handle_info{
-            .id = getNextId(),
-            .handle = new CoRoutineHandler(parent),
-          };
-          GetSchedule::get_instance().schedule_now(handle_info);
+          HandleInfo handle_info(parent.promise().get_handle_id(),
+                                 std::make_unique<CoRoutineHandler>(parent));
+          GetSchedule::get_instance().schedule_now(std::move(handle_info));
         }
         void await_resume() noexcept {
         }
@@ -150,6 +153,8 @@ class Task {
     bool is_suspend_init{false};
     std::source_location _source_location{};
     std::coroutine_handle<Promise> _parent{};
+
+   private:
     // int _value{};
   };
   using result_type = R;
@@ -157,25 +162,29 @@ class Task {
   explicit Task(std::coroutine_handle<promise_type> coroutine_handle)
     : _coroutine_handle(coroutine_handle) {
   }
-  ~Task() {
+  ~Task() noexcept {
     if (_coroutine_handle && _coroutine_handle.done()) {
       _coroutine_handle.destroy();
     }
   }
+  // 作为一个子协程 我是否已经完成了
   bool await_ready() {
     return false;
   }
+  // 作为一个未完成的子协程 我要做哪些 哪些工作恢复父协程:
+  // 父协程的恢复交给final_suspend 这里只需要恢复子协程的执行
   void await_suspend(std::coroutine_handle<promise_type> coroutine_handle) {
-    HandleInfo handle_info{
-      .id = getNextId(),
-      .handle = new CoRoutineHandler(_coroutine_handle),
-    };
+    // 子而不是父
+    HandleInfo handle_info(
+      _coroutine_handle.promise().get_handle_id(),
+      std::make_unique<CoRoutineHandler>(_coroutine_handle));
     // 保存当前协程挂起时 保存父协程
     _coroutine_handle.promise()._parent = coroutine_handle;
 
-    // 如果没就绪 何时恢复子协程--->进入队列
-    GetSchedule::get_instance().schedule_now(handle_info);
+    // 恢复子协程的执行
+    GetSchedule::get_instance().schedule_now(std::move(handle_info));
   }
+  // 作为一个子协程 恢复父协程前可以执行的操作
   // shedule遍历队列 调用handle的resume 协程恢复 然后到这里
   void await_resume() {
     std::cout << "await_resume\n";
@@ -192,6 +201,9 @@ class Task {
   }
   decltype(auto) get_handle() {
     return _coroutine_handle;
+  }
+  HandleID get_handle_id() const {
+    return _coroutine_handle.promise().get_handle_id();
   }
   //  private:
   std::coroutine_handle<promise_type> _coroutine_handle{};

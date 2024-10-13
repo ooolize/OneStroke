@@ -20,11 +20,14 @@ class SheduleTaskAwaiter {
   template <lz::concepts::Future T>
   SheduleTaskAwaiter(T&& task) : _task(std::forward<T>(task)) {
     // add task to schedule
-    HandleInfo handle_info{
-      .id = getNextId(),
-      .handle = new CoRoutineHandler(task.get_handle()),
-    };
-    GetSchedule::get_instance().schedule_now(handle_info);
+    HandleInfo handle_info(
+      task.get_handle_id(),
+      std::make_unique<CoRoutineHandler>(task.get_handle()));
+    GetSchedule::get_instance().schedule_now(std::move(handle_info));
+  }
+
+  HandleID get_handle_id() const {
+    return _handle_id;
   }
   decltype(auto) operator co_await() {
     // return co_await _task;  // 返回 _task 的 awaiter
@@ -34,6 +37,7 @@ class SheduleTaskAwaiter {
 
  private:
   Task _task;
+  HandleID _handle_id;
 };
 
 // 模板参数推导指引

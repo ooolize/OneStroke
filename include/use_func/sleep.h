@@ -25,13 +25,12 @@ class SleepAwaiter {
   bool await_ready() {
     return false;
   }
-  void await_suspend(std::coroutine_handle<> handle) {
-    // _caller_handle = handle;
-    HandleInfo handle_info{
-      .id = getNextId(),
-      .handle = new CoRoutineHandler(handle),
-    };
-    GetSchedule::get_instance().schedule_after(handle_info, _seconds);
+  template <typename Promise>
+  void await_suspend(std::coroutine_handle<Promise> handle) {
+    HandleInfo handle_info(handle.promise().get_handle_id(),
+                           std::make_unique<CoRoutineHandler>(handle));
+    GetSchedule::get_instance().schedule_after(std::move(handle_info),
+                                               _seconds);
   }
   void await_resume() {
     std::cout << "sleep_resume\n";

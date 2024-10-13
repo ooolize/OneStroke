@@ -39,8 +39,9 @@ class Schedule {
   std::jthread _jthread;
   NetEvent _net_event{};
   std::queue<HandleInfo> _ready_queue{};
-  std::queue<std::pair<HandleInfo, TimePoint>> _wait_queue{};
-  std::queue<HandleID> _cancel_queue{};
+  std::queue<std::pair<HandleInfo, TimePoint>>
+    _wait_queue{};  // 按时间有序考虑红黑树
+  std::vector<HandleID> _cancel_queue{};
 };
 
 class GetSchedule {

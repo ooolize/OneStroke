@@ -151,6 +151,13 @@ after test3
 在
 
 co_await让出父协程 并在子协程(awaiter)的await_suspend中有机会恢复 或者保存下来择机恢复
+co_await是否让出父协程取决于awaiter的实现 
+
++ 为何cancel会失效
+
+// co_await task await_suspend
+// final_suspend
+恢复父协程两次 一次cancel
 
 ## TODO
 
@@ -166,3 +173,5 @@ co_await让出父协程 并在子协程(awaiter)的await_suspend中有机会恢�
 
 + promise类型的构造 标签派发 使得init_suspend不再阻塞
 + task_schedule的参数传递 
+
+想好数据怎么存放 再确定关系

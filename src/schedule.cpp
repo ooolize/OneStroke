@@ -6,16 +6,19 @@
  */
 #include "schedule.h"
 
+#include <algorithm>
+#include <ranges>
 namespace lz {
 namespace ZhouBoTong {
 
 Schedule::Schedule() {
+  _cancel_queue.reserve(100);
 }
 
 HandleID Schedule::schedule_now(HandleInfo handle) {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  _ready_queue.push(handle);
+  _ready_queue.push(std::move(handle));
   return handle.id;
 }
 
@@ -23,19 +26,19 @@ HandleID Schedule::schedule_at(HandleInfo handle, TimePoint time_point) {
   std::lock_guard<std::mutex> lock(_mutex);
 
   handle.state = HandleState::kWait;
-  _wait_queue.push(std::pair(handle, time_point));
+  _wait_queue.push(std::pair(std::move(handle), time_point));
   return handle.id;
 }
 
 HandleID Schedule::schedule_after(HandleInfo handle, Duration duration) {
   TimePoint time_point = std::chrono::steady_clock::now() + duration;
-  return schedule_at(handle, time_point);
+  return schedule_at(std::move(handle), time_point);
 }
 
 void Schedule::remove_task(HandleID id) {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  _cancel_queue.push(id);
+  _cancel_queue.push_back(id);
 }
 
 bool Schedule::is_empty() {
@@ -55,20 +58,27 @@ void Schedule::loop() {
     // 如果wait有就绪的任务，就将其放入ready队列
     while (!_wait_queue.empty()) {
       std::lock_guard<std::mutex> lock(_mutex);
-      auto handle = _wait_queue.front();
-      if (handle.first.state == HandleState::kWait &&
-          std::chrono::steady_clock::now() >= handle.second) {
+      auto state = _wait_queue.front().first.state;
+      auto is_ready =
+        std::chrono::steady_clock::now() >= _wait_queue.front().second;
+      if (state == HandleState::kWait && is_ready) {
+        auto handle = std::move(_wait_queue.front());
         handle.first.state = HandleState::kReady;
-        _ready_queue.push(handle.first);
+        _ready_queue.push(std::move(handle.first));
         _wait_queue.pop();
       }
     }
     // 检查ready队列，排除掉cancel队列中的任务，否则执行
     while (!_ready_queue.empty()) {
-      auto handle = _ready_queue.front();
-      if (handle.state == HandleState::kCancel) {
+      auto handle = std::move(_ready_queue.front());
+      decltype(_cancel_queue)::iterator iter;
+      if (!_cancel_queue.empty() &&
+          (iter = std::ranges::find(_cancel_queue, handle.id)) !=
+            _cancel_queue.end()) {
         std::lock_guard<std::mutex> lock(_mutex);
         _ready_queue.pop();
+        _cancel_queue.erase(iter);
+        // *iter = -1;
       } else {
         handle.handle->run();
         {
