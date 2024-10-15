@@ -15,7 +15,7 @@
 #include "task.h"
 
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 // 不想把他作为协程 而是在函数中调用协程
 template <typename Task>
@@ -28,6 +28,6 @@ decltype(auto) run(Task&& task) {
   return task.get_return_value();
 }
 
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 
 }  // namespace lz

@@ -7,7 +7,7 @@
 #pragma once
 
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 class NetEvent {};
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

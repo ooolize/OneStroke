@@ -14,7 +14,7 @@
 #include "use_func/shedule_task.h"
 #include "use_func/sleep.h"
 #include "use_func/wait_for.h"
-using namespace lz::ZhouBoTong;  // NOLINT
+using namespace lz::OneStroke;  // NOLINT
 
 Task<void> test_shedule_task() {
   auto awaiter = shedule_task(test_sleep());

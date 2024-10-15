@@ -11,7 +11,7 @@
 #include "task.h"
 #include "use_concept.h"
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 template <lz::concepts::Future Task>
 class SheduleTaskAwaiter {
@@ -61,5 +61,5 @@ Task<void> test_sleep() {
   std::cout << "Inside coroutine\n";
 }
 
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

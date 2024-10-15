@@ -7,8 +7,8 @@
 
 #pragma once
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 class WaitForInit {};
 constexpr WaitForInit wait_for_init{};
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

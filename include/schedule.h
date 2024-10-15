@@ -14,7 +14,7 @@
 #include "interface/handle.h"
 #include "utils/use_epoll.h"
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 class Schedule {
  public:
   Schedule();
@@ -53,5 +53,5 @@ class GetSchedule {
     return schedule;
   }
 };
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

@@ -24,7 +24,7 @@
 #include "utils/system.h"
 
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 static constexpr int MAX_EVENT = 1024;
 class EpollEvent {
  public:
@@ -166,5 +166,5 @@ class EpollEvent {
   std::unordered_set<SocketID> _ready_fd{};
   std::unordered_set<SocketID> _new_fd_set{};
 };
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

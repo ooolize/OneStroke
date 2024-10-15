@@ -12,7 +12,7 @@
 
 #include "use_func/echo.h"
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 Schedule::Schedule() {
   _cancel_queue.reserve(100);
@@ -117,5 +117,5 @@ void Schedule::loop() {
   }
 }
 
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

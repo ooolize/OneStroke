@@ -4,8 +4,8 @@ set(BENCHMARK_SOURCES ${BENCHMARK_FILES})
 
 find_package(benchmark REQUIRED)
 find_package(fmt  REQUIRED)
-add_executable(ZhouBoTongBenchmark ${BENCHMARK_SOURCES})
+add_executable(OneStrokeBenchmark ${BENCHMARK_SOURCES})
 
-target_link_libraries(ZhouBoTongBenchmark PUBLIC fmt::fmt benchmark::benchmark_main)
+target_link_libraries(OneStrokeBenchmark PUBLIC fmt::fmt benchmark::benchmark_main)
 
-set_target_properties(ZhouBoTongBenchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set_target_properties(OneStrokeBenchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)

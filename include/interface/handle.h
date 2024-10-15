@@ -14,7 +14,7 @@
 
 #include "utils/empty_base.h"
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 class Handle;
 using HandleID = std::size_t;
@@ -86,5 +86,5 @@ struct HandleInfo {
   HandleState state = HandleState::kReady;
 };
 
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

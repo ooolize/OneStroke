@@ -24,7 +24,7 @@
 #include "schedule.h"
 #include "task.h"
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 // 处理客户端发送的数据并回显
 constexpr int BUFFER_SIZE = 1024;
@@ -75,5 +75,5 @@ class EchoAwaiter {
 Task<void> echo(SocketID client_fd) {
   co_await EchoAwaiter(client_fd);
 }
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

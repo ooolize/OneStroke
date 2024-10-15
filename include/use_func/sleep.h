@@ -16,7 +16,7 @@
 #include "task.h"
 
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 class SleepAwaiter {
  public:
@@ -50,5 +50,5 @@ auto co_sleep(std::chrono::seconds seconds) {
   return detail_co_sleep(seconds);
 }
 
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz

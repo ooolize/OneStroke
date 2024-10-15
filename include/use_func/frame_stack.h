@@ -15,7 +15,7 @@
 #include "task.h"
 
 namespace lz {
-namespace ZhouBoTong {
+namespace OneStroke {
 
 class FrameStackAwaiter {
  public:
@@ -58,5 +58,5 @@ Task<void> deep1(WaitForInit) {
   fmt::print("{}\n", "after deep1");
 }
 
-}  // namespace ZhouBoTong
+}  // namespace OneStroke
 }  // namespace lz
