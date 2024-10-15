@@ -53,7 +53,6 @@ Task<void> test_wait_for() {
   fmt::print("{}\n", "before test_wait_for");
   co_await co_wait_for(wait_func(wait_for_init), std::chrono::seconds(1));
   fmt::print("{}\n", "after test_wait_for");
-  
 }
 
 int main() {
@@ -63,7 +62,7 @@ int main() {
   // test2();
   // test3();
   // auto p = test_frame_stack();
-  auto p = test_wait_for();
+  // auto p = test_wait_for();
   std::this_thread::sleep_for(std::chrono::seconds(10000));
   return 0;
 }

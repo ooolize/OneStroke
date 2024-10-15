@@ -7,7 +7,10 @@
 #include "schedule.h"
 
 #include <algorithm>
+#include <map>
 #include <ranges>
+
+#include "use_func/echo.h"
 namespace lz {
 namespace ZhouBoTong {
 
@@ -47,14 +50,38 @@ bool Schedule::is_empty() {
 }
 
 void Schedule::Start() {
+  _epoll_event.init(8082);
   _jthread = std::jthread(&Schedule::loop, this);
 }
 
 void Schedule::loop() {
+  std::map<SocketID, HandleInfo> socket2handle{};
+
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
+    _epoll_event.clear();
     // 如果epoll有就绪的任务，就将其放入ready队列
+
+    _epoll_event.wait_event(-1);
+    decltype(auto) ready_fd = _epoll_event.get_ready_fd();
+    decltype(auto) new_fd = _epoll_event.get_new_fd();
+    // 可能是新的连接
+    for (const auto& fd : new_fd) {
+      auto task = echo(fd);
+      HandleInfo handle_info(
+        fd, std::make_unique<CoRoutineHandler>(task.get_handle()));
+      socket2handle[fd] = std::move(handle_info);
+    }
+    // 也可能是旧的连接 发消息了
+    for (const auto& fd : ready_fd) {
+      auto iter = socket2handle.find(fd);
+      if (iter != socket2handle.end()) {
+        auto handle = std::move(iter->second);
+        _ready_queue.push(std::move(handle));
+        socket2handle.erase(iter);
+      }
+    }
+
     // 如果wait有就绪的任务，就将其放入ready队列
     while (!_wait_queue.empty()) {
       std::lock_guard<std::mutex> lock(_mutex);

@@ -6,12 +6,13 @@
  */
 #pragma once
 
+#include <map>
 #include <mutex>
 #include <queue>
 #include <thread>
 
 #include "interface/handle.h"
-#include "netevent.h"
+#include "utils/use_epoll.h"
 namespace lz {
 namespace ZhouBoTong {
 class Schedule {
@@ -35,9 +36,10 @@ class Schedule {
   Schedule& operator=(Schedule&&) = delete;
 
  private:
+  EpollEvent _epoll_event{};
+
   std::mutex _mutex{};
   std::jthread _jthread;
-  NetEvent _net_event{};
   std::queue<HandleInfo> _ready_queue{};
   std::queue<std::pair<HandleInfo, TimePoint>>
     _wait_queue{};  // 按时间有序考虑红黑树

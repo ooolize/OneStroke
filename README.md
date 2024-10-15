@@ -159,6 +159,8 @@ co_await是否让出父协程取决于awaiter的实现
 // final_suspend
 恢复父协程两次 一次cancel
 
+
++ 已经listen了 为什么还需要epoll
 ## DONE
 
 + final恢复调用者 以及 构造时保存调用者
@@ -174,10 +176,11 @@ co_await是否让出父协程取决于awaiter的实现
 + loop改造
 + waitqueue数据优化
 + read
++ 测试
 
 
-
-
+## 首要目标
+## 次要目标
 
 
 想好数据怎么存放 再确定关系

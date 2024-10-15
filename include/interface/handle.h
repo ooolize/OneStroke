@@ -18,6 +18,7 @@ namespace ZhouBoTong {
 
 class Handle;
 using HandleID = std::size_t;
+using SocketID = std::int32_t;
 using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
 using Duration = std::chrono::duration<int64_t, std::nano>;
 using HandleUPtr = std::unique_ptr<Handle>;
@@ -27,7 +28,6 @@ inline HandleID getNextId() {
   static HandleID id = 0;
   return id++;
 }
-
 
 enum class HandleState : uint8_t {
   kReady,
@@ -50,7 +50,7 @@ class CoRoutineHandler : public Handle {
   CoRoutineHandler() : _handle_id(getNextId()) {
   }
   CoRoutineHandler(std::coroutine_handle<> coroutine_handle)
-    : _coroutine_handle(coroutine_handle) {
+    : _coroutine_handle(coroutine_handle), _handle_id(getNextId()) {
   }
   void run() final {
     if (_coroutine_handle.done()) {
@@ -85,7 +85,6 @@ struct HandleInfo {
   HandleUPtr handle = nullptr;
   HandleState state = HandleState::kReady;
 };
-
 
 }  // namespace ZhouBoTong
 }  // namespace lz
